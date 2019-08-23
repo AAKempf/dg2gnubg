@@ -3,11 +3,13 @@
 include '../config.php';
 
 // Latest file
-$files = scandir($cfg["path_mat"], SCANDIR_SORT_ASCENDING);
-$file_time = filectime($cfg["path_mat"] . $files[0]);
+$files = array_slice(scandir($cfg["path_mat"], 1), 2);
+rsort($files, SORT_NUMERIC);
+$file_time = filemtime($cfg["path_mat"].$files[0]);
 
-$files_analyzed = scandir($cfg["path_html"], SCANDIR_SORT_ASCENDING);
-$file_analyzed_time = filectime($cfg["path_html"] . $files_analyzed[0]);
+$files_analyzed = array_slice(scandir($cfg["path_html"], 1), 2);
+rsort($files_analyzed, SORT_NUMERIC);
+$file_analyzed_time = filemtime($cfg["path_html"].$files_analyzed[0]);
 
 $file_date = date('d.m.Y H:i', $file_time);
 $file_date_analyzed = date('d.m.Y H:i', $file_analyzed_time);

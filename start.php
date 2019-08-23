@@ -18,7 +18,8 @@ if ($cfg["dg_profile"] > '') {
 }
 
 $files_analyzed = scandir($cfg["path_html"], SCANDIR_SORT_ASCENDING);
-$file_date = date('d.m.Y', filectime($cfg["path_html"] . $files_analyzed[0]));
+rsort($files_analyzed, SORT_NUMERIC);
+$file_date = date('d.m.Y', filemtime($cfg["path_html"] . $files_analyzed[0]));
 
 ?><!DOCTYPE html>
 <html lang="en">
