@@ -17,7 +17,7 @@ $cfg["players_name"] = "";
 $cfg["dg_profile"] = "";
 
 // general gnubg-settings for the match analysis
-// to see the possible commands, oben "gnubg -t" and type there "? set"  or use help in gnubg gui
+// to see the possible commands, open "gnubg -t" and type there "? set"  or use help in gnubg gui
 $cfg["gnubg_ini_head"] = '
 set threads 3 
 set analysis moves on
@@ -49,7 +49,7 @@ set sound enable no
 // Additional gnubg commands for each match
 $cfg["gnubg_ini_list"] = [
     "import mat {path_mat}{file_mat}",  // import match
-    "analyse match",  // analyse match
+    "analyse match",  // analyze match
     "save match {path_sgf}{file_sgf}", // save as sgf file first, see https://savannah.gnu.org/bugs/index.php?50617
     "relational add match", // save statistics to player records in sql database
     "load match {path_sgf}{file_sgf}", // load the sgf file

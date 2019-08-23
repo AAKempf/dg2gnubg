@@ -62,9 +62,8 @@ $file_date = date('d.m.Y', filectime($cfg["path_html"] . $files_analyzed[0]));
     <pre><?= $cfg["gnubg_ini_head"] ?></pre>
     <pre><?= implode(PHP_EOL, $cfg["gnubg_ini_list"]) ?></pre>
 
-    <p>If you want to use these tools for yourself, you can download them here:<br>
-        <a href="//www.amalesh.com/bg/dg2gnubg1.0.zip">dg2gnubg1.0.zip</a>,
-        <a href="//www.amalesh.com/bg/dg2gnubg1.0.tar.gz">dg2gnubg1.0.tar.gz</a></p>
+    <p>If you want to use these tools for yourself, you can download them from
+        <a href="https://github.com/AAKempf/dg2gnubg">GitHub</a></p>
 
     <p>Btw: <a href="openings.php">Starting rolls</a> and the best moves.</p>
 </div>

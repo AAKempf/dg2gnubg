@@ -256,7 +256,7 @@ if(!isset($_GET["cli"])) {
 <?php
 
 if ($cmd_written) { ?>
-    <h3>GnuBGcommand file succesfully written</h3>
+    <h3>GnuBGcommand file successfully written</h3>
     <p>Open your terminal and copy & paste the following line to it:</p>
     <pre class="ini"><?= $command . " -c " . $cfg["path_gnubg_ini"] ?></pre>
     <p>The content of the ini-file:</p>

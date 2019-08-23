@@ -1,6 +1,6 @@
 Dailygammon/GNU Backgammon Tools Ver. 1.0
 =
-It's possible to download the own backgammon matches from dailygammon.com (DG) in a readable format for GNU Backgammon which can analyse and export them into different formats, e.g. HTML and PDF.
+Download your own backgammon matches from dailygammon.com (DG) in a readable format for GNU Backgammon which can analyze and export them into different formats, e.g. HTML and PDF.
   
 This small PHP collection "do the job" and give you also a simple site to browse the matches. 
 
@@ -12,7 +12,7 @@ You see it running at https://dg2gnubg.amalesh.de/
 3. GNU Backgammon
 
 # Installation and Configuration
-Save the files anywhere on your (local) webserver.
+Save the files anywhere on your (local) web server.
 
 Open tools/get_dg_matches.php and insert your User-ID and your Cookie to download the files from dailygammon.com.
 
