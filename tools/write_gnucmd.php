@@ -1,6 +1,6 @@
 <?php
 /**
- * Writes command file for gnubg from saved dailygammon matches
+ * Writes cmdGnuBg file for gnubg from saved dailygammon matches
  *
  * If you wanna download matches from dailygammon: Use get_dg_matches.php first
  *
@@ -18,41 +18,44 @@
 
 // Configuration
 // *************
-include __DIR__ . "/../config.php";
+$cfg = [];
+include "../config.php";
+if (file_exists(  "../config.local.php")) {
+    include  "../config.local.php";
+}
 
-// No need to change something below until you wanna change the script
 
 // Start with the work
 // *******************
 // get directory handle
-$dp = opendir($cfg["path_mat"]);
+$dp = opendir($cfg["pathMat"]);
 
 // read directory and build an array of values
 // *******************************************
 
 // contains all .mat file names later on
-$match_numbers = [];
+$matchNumbers = [];
 
 // contains all match infos later on
-$match_infos = [];
+$matchInfos = [];
 
 $i = 0;
 while (($file = readdir($dp)) !== false) {
     if ($file !== "." && $file !== ".."
         && false !== strpos($file, ".mat")
-        && filesize($cfg["path_mat"] . $file) > 200
+        && filesize($cfg["pathMat"] . $file) > 200
     ) {
 
         // file date
-        $match_infos[$i]["fd"] = date("Y-m-d", fileatime($cfg["path_mat"] . $file));
+        $matchInfos[$i]["fd"] = date("Y-m-d", fileatime($cfg["pathMat"] . $file));
 
         // {fn}
-        $match_numbers[$i] = str_replace(".mat", "", $file);
+        $matchNumbers[$i] = str_replace(".mat", "", $file);
 
         // file handle
-        $fp = fopen($cfg["path_mat"] . $file, "rb");
+        $fp = fopen($cfg["pathMat"] . $file, "rb");
 
-        $firstname = "";
+        $firstName = "";
 
         $k = 0;
         while ($k < 4 && !feof($fp)) {
@@ -63,47 +66,46 @@ while (($file = readdir($dp)) !== false) {
              2|Game 1
              3|victory1 : 0                        amalesh : 0
             */
-            $line = trim(fgets($fp, 72));
+            $lineMatch = trim(fgets($fp, 72));
 
             switch ($k) {
                 case "0": // {mp}
-                    $match_infos[$i]["mp"] = trim(substr($line, 0, 2));
+                    $matchInfos[$i]["mp"] = trim(substr($lineMatch, 0, 2));
 
-                    if (strlen($match_infos[$i]["mp"]) === 1) {
-                        $match_infos[$i]["mp"] = "0" . $match_infos[$i]["mp"];
+                    if (strlen($matchInfos[$i]["mp"]) === 1) {
+                        $matchInfos[$i]["mp"] = "0" . $matchInfos[$i]["mp"];
                     }
                     break;
 
                 case "3": // {p1} {p2}
                     // Get the first name and reduce line to second name
 
-                    // get the firstname
-                    $line_len = strlen($line);
-                    /** @noinspection ForeachInvariantsInspection */
-                    for ($x = 0; $x < $line_len; $x++) {
-                        $sTmp = $line[$x];
+                    // get the firstName
+                    $lenLine = strlen($lineMatch);
+                    for ($x = 0; $x < $lenLine; $x++) {
+                        $sTmp = $lineMatch[$x];
                         if ($sTmp !== ":") {
-                            $firstname .= $sTmp;
+                            $firstName .= $sTmp;
                         } else {
-                            $x = $line_len;
+                            $x = $lenLine;
                         }
                     }
-                    $line = str_replace([" : 0", $firstname], "", $line);
+                    $lineMatch = str_replace([" : 0", $firstName], "", $lineMatch);
 
                     // replace double empty spaces
-                    $line = preg_replace('/\s+/', ' ', $line);
+                    $lineMatch = preg_replace('/\s+/', ' ', $lineMatch);
 
-                    $match_infos[$i]["p1"] = trim($firstname);
-                    $match_infos[$i]["p2"] = trim($line);
+                    $matchInfos[$i]["p1"] = trim($firstName);
+                    $matchInfos[$i]["p2"] = trim($lineMatch);
 
-                    if (count($cfg["replace_name_from"])) {
-                        if (in_array($match_infos[$i]["p1"], $cfg["replace_name_from"], true)) {
-                            $match_infos[$i]["p1"] = str_replace($cfg["replace_name_from"], $cfg["replace_name_to"],
-                                $match_infos[$i]["p1"]);
+                    if (count($cfg["replaceNameFrom"])) {
+                        if (in_array($matchInfos[$i]["p1"], $cfg["replaceNameFrom"], true)) {
+                            $matchInfos[$i]["p1"] = str_replace($cfg["replaceNameFrom"], $cfg["replaceNameTo"],
+                                $matchInfos[$i]["p1"]);
                         }
-                        if (in_array($match_infos[$i]["p2"], $cfg["replace_name_from"], true)) {
-                            $match_infos[$i]["p2"] = str_replace($cfg["replace_name_from"], $cfg["replace_name_to"],
-                                $match_infos[$i]["p2"]);
+                        if (in_array($matchInfos[$i]["p2"], $cfg["replaceNameFrom"], true)) {
+                            $matchInfos[$i]["p2"] = str_replace($cfg["replaceNameFrom"], $cfg["replaceNameTo"],
+                                $matchInfos[$i]["p2"]);
                         }
                     }
 
@@ -118,15 +120,15 @@ while (($file = readdir($dp)) !== false) {
         fclose($fp);
 
         // check for names to ignore / skip
-        if (isset($cfg["ignore_players"]) && in_array($firstname, $cfg["ignore_players"], true)) {
-            unset($match_infos[$i]);
+        if (isset($cfg["ignorePlayers"]) && in_array($firstName, $cfg["ignorePlayers"], true)) {
+            unset($matchInfos[$i]);
         }
         // check for games to ignore / skip
-        if (isset($cfg["ignore_games"]) && in_array($match_infos[$i]["mp"], $cfg["ignore_games"], true)) {
-            unset($match_infos[$i]);
+        if (isset($cfg["ignoreGames"]) && in_array($matchInfos[$i]["mp"], $cfg["ignoreGames"], true)) {
+            unset($matchInfos[$i]);
         }
 
-        if (isset($match_infos[$i])) {
+        if (isset($matchInfos[$i])) {
             $i++;
         }
     }
@@ -134,91 +136,91 @@ while (($file = readdir($dp)) !== false) {
 // close directory
 closedir($dp);
 
-// read output directory to pretend double analyses
-$dp = opendir($cfg["path_html"]);
+// read thisOutput directory to pretend double analyses
+$dp = opendir($cfg["pathHtml"]);
 
 // analyzed matches
-$analyze_exists = [];
+$analyzeExists = [];
 
-while (($file_analyze = readdir($dp)) !== false) {
-    if ($file_analyze !== "." && $file_analyze !== ".." && false !== strpos($file_analyze, ".html")) {
-        // check if match number (filename) is in older output file name
-        foreach ($match_numbers as $key => $val) {
+while (($fileAnalyze = readdir($dp)) !== false) {
+    if ($fileAnalyze !== "." && $fileAnalyze !== ".." && false !== strpos($fileAnalyze, ".html")) {
+        // check if match number (filename) is in older thisOutput file name
+        foreach ($matchNumbers as $key => $val) {
             // matches
-            if ($val && false !== strpos($file_analyze, $val)) {
-                $analyze_exists[$key] = $val;
+            if ($val && false !== strpos($fileAnalyze, $val)) {
+                $analyzeExists[$key] = $val;
             }
         }
 
-        reset($match_numbers);
+        reset($matchNumbers);
     }
 }
 // html file already exists
-if (count($analyze_exists)) {
+if (count($analyzeExists)) {
     // remove double values
-    $analyze_exists = array_unique($analyze_exists);
+    $analyzeExists = array_unique($analyzeExists);
 
-    // get only new files whit no output so far
-    $analyze_new = array_diff($match_numbers, $analyze_exists);
+    // get only new filesShow whit no thisOutput so far
+    $analyzeNew = array_diff($matchNumbers, $analyzeExists);
 } else {
-    $analyze_new = $match_numbers;
+    $analyzeNew = $matchNumbers;
 }
 
 // build the gnubg commands
 // ************************
-$command = $cfg["gnubg_cmd"];
+$cmdGnuBg = $cfg["cmdGnuBg"];
 if (DIRECTORY_SEPARATOR === "\\") {
-   $command = $cfg["gnubg_cmd_win"];
+    $cmdGnuBg = $cfg["cmdGnuBgWin"];
 }
 
-$cmd_line = "# commands for {$command}" . $cfg["gnubg_ini_head"];
+$cmdLine = "# commands for {$cmdGnuBg}" . $cfg["iniHeadGnuBg"];
 
-foreach ($analyze_new as $key => $val) {
+foreach ($analyzeNew as $key => $val) {
 
     // Export file name
-    // $cfg["file_name_pattern"] = "{fn}_{mp}p_{p1}_{p2}";
+    // $cfg["patternFileName"] = "{fn}_{mp}p_{p1}_{p2}";
 
     // replace spaces in player name
-    $player_1 = str_replace(" ", "-", $match_infos[$key]["p1"]);
-    $player_2 = str_replace(" ", "-", $match_infos[$key]["p2"]);
+    $player1 = str_replace(" ", "-", $matchInfos[$key]["p1"]);
+    $player2 = str_replace(" ", "-", $matchInfos[$key]["p2"]);
 
     $change = [
-        "{mp}" => $match_infos[$key]["mp"],
-        "{fn}" => $analyze_new[$key],
-        "{fd}" => $match_infos[$key]["fd"],
-        "{p1}" => $player_1,
-        "{p2}" => $player_2,
+        "{mp}" => $matchInfos[$key]["mp"],
+        "{fn}" => $analyzeNew[$key],
+        "{fd}" => $matchInfos[$key]["fd"],
+        "{p1}" => $player1,
+        "{p2}" => $player2,
     ];
 
     // without extensions, will be added later
-    $output_file = strtr($cfg["file_name_pattern"], $change);
+    $exportFile = strtr($cfg["patternFileName"], $change);
 
-    $cmd_line .= "# "
-        . $match_infos[$key]["mp"]
+    $cmdLine .= "# "
+        . $matchInfos[$key]["mp"]
         . " point match: "
-        . $match_infos[$key]["p1"]
+        . $matchInfos[$key]["p1"]
         . " vs. "
-        . $match_infos[$key]["p2"]
+        . $matchInfos[$key]["p2"]
         . "\n";
 
     $change = [
-        "{path_mat}" => $cfg["path_mat"],
-        "{file_mat}" => $analyze_new[$key] . ".mat",
-        "{path_html}" => $cfg["path_html"],
-        "{file_html}" => $output_file . ".html",
-        "{path_sgf}" => $cfg["path_sgf"],
-        "{file_sgf}" => $output_file . ".sgf",
-        "{path_pdf}" => $cfg["path_pdf"],
-        "{file_pdf}" => $output_file . ".pdf",
+        "{pathMat}" => $cfg["pathMat"],
+        "{file_mat}" => $analyzeNew[$key] . ".mat",
+        "{pathHtml}" => $cfg["pathHtml"],
+        "{file_html}" => $exportFile . ".html",
+        "{pathSgf}" => $cfg["pathSgf"],
+        "{file_sgf}" => $exportFile . ".sgf",
+        "{pathPdf}" => $cfg["pathPdf"],
+        "{file_pdf}" => $exportFile . ".pdf",
     ];
 
-    if (isset($cfg["gnubg_ini_list"])) {
-        foreach ($cfg["gnubg_ini_list"] as $key2 => $val2) {
+    if (isset($cfg["iniListGnuBg"])) {
+        foreach ($cfg["iniListGnuBg"] as $key2 => $val2) {
 
             if (false !== strpos($val2, "{")) {
                 $val2 = strtr($val2, $change);
             }
-            $cmd_line .= $val2 . PHP_EOL;
+            $cmdLine .= $val2 . PHP_EOL;
         }
     }
 }
@@ -230,16 +232,18 @@ if (!empty($argv[1])) {
 
 // write the command file
 // **********************
-$cmd_written = false;
-if (count($analyze_new)) {
-    $fp = fopen($cfg["path_gnubg_ini"], "wb");
-    $cmd_written = fwrite($fp, $cmd_line);
+$cmdWritten = false;
+if (count($analyzeNew)) {
+    $fp = fopen($cfg["pathGnuBgIni"], "wb");
+    $cmdWritten = fwrite($fp, $cmdLine);
     fclose($fp);
 }
 
 // write_gnucmd.php?write=1&cli=1
-// to write the command file only and suppress this output
-if(!isset($_GET["cli"])) {
+// to write the cmdGnuBg file only and suppress the thisOutput
+if (isset($_GET["cli"])) {
+    exit;
+}
 
 ?><!DOCTYPE html>
 <html lang="en" dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
@@ -251,20 +255,19 @@ if(!isset($_GET["cli"])) {
 <body>
 <h1>Writes command file for GnuBG from saved backgammon matches</h1>
 
-<p>You have <?= count($analyze_exists) ?> analyzed and <?= count($analyze_new) ?> non-analyzed matches</p>
+<p>You have <?= count($analyzeExists) ?> analyzed and <?= count($analyzeNew) ?> non-analyzed matches</p>
 
 <?php
-
-if ($cmd_written) { ?>
+if ($cmdWritten) { ?>
     <h3>GnuBGcommand file successfully written</h3>
     <p>Open your terminal and copy & paste the following line to it:</p>
-    <pre class="ini"><?= $command . " -c " . $cfg["path_gnubg_ini"] ?></pre>
+    <pre><?= $cmdGnuBg . " -c " . $cfg["pathGnuBgIni"] ?></pre>
     <p>The content of the ini-file:</p>
-    <pre class="ini"><?= $cmd_line ?></pre>
+    <pre><?= $cmdLine ?></pre>
 <?php } else { ?>
     <h3>Error writing GnuBG command file, maybe all .mat-files have been analyzed</h3>
+    <p>Open <a href="../index.php">analyzed matches</a> or check for <a href="get_dg_matches.php">finished one</a></p>
 <?php } ?>
 
 </body>
 </html>
-<?php }

@@ -14,88 +14,87 @@
  *
  */
 
-// your dailygammon setting
-$cfg_user = ""; # USERID from your DG cookie
-$cfg_pass = ""; # PASSWORD from your DG cookie (will be encrypted)
-$cfg_days_to_view = 60; // to limit the list of games on DG
+// loads configuration
+$cfg = [];
+include "../config.php";
+if (file_exists(  "../config.local.php")) {
+    include  "../config.local.php";
+}
 
-// End of user configuration
+$linkBaseDG = "http://www.dailygammon.com/bg/user/";
+$linkExportDG = "http://www.dailygammon.com/bg/export/";
+$mainWget = "wget --quiet --header=\"Cookie: USERID={$cfg["user"]}; PASSWORD={$cfg["pass"]}\"";
 
-$dg_base = "http://www.dailygammon.com/bg/user/";
-$dg_export = "http://www.dailygammon.com/bg/export/";
-$main_wget = "wget --quiet --header=\"Cookie: USERID={$cfg_user}; PASSWORD={$cfg_pass}\"";
-
-if ($cfg_user === "" || $cfg_pass === "") {
-    echo "Please set \$cfg_user and \$cfg_pass in this file \n";
+if ($cfg["user"] === "" || $cfg["pass"] === "") {
+    echo "Please set \$cfg['user'] and \$cfg['pass'] in ../config.local.php or ../config.php \n";
     exit;
 }
 
-// loads configuration
-include __DIR__ . '/../config.php';
 
-
-// read output directory to pretend double analyses
+// read thisOutput directory to pretend double analyses
 // ************************************************
 // get directory handle
-$dp = opendir($cfg["path_mat"]);
+$dp = opendir($cfg["pathMat"]);
 
 // read directory and build an array of values
-$exist_matches = []; // will contain all existings matches
-$new_matches = [];
+$oldMatches = []; // will contain all existings matches
+$newMatches = [];
 
-// our later output
-$output[] = "";
+// our later Output
+$thisOutput[] = "";
+
 
 $i = 0;
-while (($file_exist = readdir($dp)) !== false) {
-    if ($file_exist !== "." && $file_exist !== ".." && false !== strpos($file_exist, ".mat")) {
-        $exist_matches[$i] = str_replace(".mat", "", $file_exist);
+while (($fileExist = readdir($dp)) !== false) {
+    if ($fileExist !== "." && $fileExist !== ".." && false !== strpos($fileExist, ".mat")) {
+        $oldMatches[$i] = str_replace(".mat", "", $fileExist);
         $i++;
     }
 }
 
 // get page with finished matches of the last 180 days
-$execute = $main_wget . " -O - " . $dg_base . $cfg_user . "?finished=1&days_to_view=" . $cfg_days_to_view;
+$execute = $mainWget . " -O - " . $linkBaseDG . $cfg['user'] . "?finished=1&days_to_view=" . $cfg["daysToView"];
 
 exec($execute, $finished);
 
 // get match numbers
-
 if (!empty($finished) && is_array($finished)) {
     foreach ($finished as $key => $val) {
         if (preg_match("/<A href=(.*?)>Review<\/A>/", $val)) {
             preg_match("/bg\/game\/(\d+)/", $val, $match);
-            $new_matches[] = $match[1];
+            $newMatches[] = $match[1];
         }
     }
 }
+
 // the new matches
-$new_matches = array_diff($new_matches, $exist_matches);
+$newMatches = array_diff($newMatches, $oldMatches);
 
-$new_matches_count = count($new_matches);
-$exist_matches_count = count($exist_matches);
+$cntNewMatches = count($newMatches);
+$cntOldMatches = count($oldMatches);
 
 
-if ($new_matches_count || $exist_matches_count) {
-    $output[] = "{$exist_matches_count} existing and {$new_matches_count} new matches";
+if ($cntNewMatches || $cntOldMatches) {
+    $thisOutput[] = "{$cntOldMatches} existing and {$cntNewMatches} new matches";
 }
 
-// get the new match files
-foreach ($new_matches as $key => $val) {
-    $output[] = "Getting Game #{$val}";
+// get the new match filesShow
+foreach ($newMatches as $key => $val) {
+    $thisOutput[] = "Getting Game #{$val}";
 
-    $execute = $main_wget . " -O " . $cfg["path_mat"] . $val . ".mat" . " " . $dg_export . $val;
+    $execute = $mainWget . " -O " . $cfg["pathMat"] . $val . ".mat" . " " . $linkExportDG . $val;
 
     $status = exec($execute);
 
-    if ($status !== 0) {
-        $output[] = "Error getting Game #{$val}";
-        break;
+    if ($status > "") {
+        $thisOutput[] = "Error getting Game #{$val} - Status: {$status}";
     }
 }
 
+$fullOutput = implode('<br>', $thisOutput);
 
-?><!DOCTYPE html>
+$tplBody = <<< HTML
+<!DOCTYPE html>
 <html lang="en" dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <link rel="stylesheet" href="../styles.css" type="text/css"/>
@@ -103,7 +102,10 @@ foreach ($new_matches as $key => $val) {
 </head>
 <body>
 <h1>Downloading *.mat files from dailygammon.com</h1>
-<p><?= implode('<br>', $output) ?></p>
+<p>{$fullOutput}</p>
 <p>Open <a href='write_gnucmd.php'>write_gnucmd</a> to write the gnubg command file</p>
 </body>
 </html>
+HTML;
+
+echo $tplBody;

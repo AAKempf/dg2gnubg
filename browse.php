@@ -4,97 +4,113 @@
 session_start();
 
 
+$cfg = [];
 include __DIR__ . "/config.php";
 
+// The Templates for the thisOutput
 
-$tpl_title = "<strong>{cnt_matches} {match_plural}, {cnt_games} games, {player_info}</strong>";
+$tplBody = <<< HTML
+<!DOCTYPE html>
+<html lang="en" dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Browse</title>
+    <link rel="stylesheet" href="styles.css" type="text/css"/>
+</head>
+<body class="fontfamily">
+{fullOutput}
+</body>
+</html>
+HTML;
 
-// template for the link // ,&#10;analyzed on {file_date}
-$tpl_link = '
-   <a href="{cfg_link_games}{val}" title="Match #{line_0}" target="games">{line_0}</a> 
-   <a href="browse.php?p={line_1}" title="Matches with {line_1}" class="ml6">{line_1}</a> 
-   <a href="browse.php?s={opponent}" title="{cnt_games} {cnt_matches} with {opponent}" class="ml6">{opponent}</a><br />';
+$tplTitle = <<< HTML
+<strong>{player_info}, {cntMatches} {match_plural}, {cntGames} games</strong>
+<hr>
+HTML;
+
+// template for the link // ,&#10;analyzed on {fileDate}
+$tplLink = <<< HTML
+<a href="{cfg_link_games}{val}" title="Match #{line_0}" target="games">{line_0}</a> 
+<a href="browse.php?p={line_1}" title="Matches with {line_1}" class="ml6">{line_1}</a> 
+<a href="browse.php?s={opponent}" title="{cntGames} {cntPlayerMatches} with {opponent}" class="ml6">{opponent}</a><br />
+HTML;
 
 
-$form_fields = $_POST;
-if (!$form_fields) {
-    $form_fields = $_GET;
+$formFields = $_POST;
+if (!$formFields) {
+    $formFields = $_GET;
 }
-// the match files we will show
-$files = [];
-// the match files to hide
-$files_hidden = [];
+// the match filesShow we will show
+$filesShow = [];
+// the match filesShow to hide
+$filesHidden = [];
 
-if (isset($_SESSION["files"])) {
-    $files = $_SESSION["files"];
-    $files_hidden = $_SESSION["files_hidden"];
+if (isset($_SESSION["filesShow"])) {
+    $filesShow = $_SESSION["filesShow"];
+    $filesHidden = $_SESSION["filesHidden"];
 } else {
     //get directory handle
-    $dir = opendir($cfg["path_html"]);
+    $dir = opendir($cfg["pathHtml"]);
 
     // read the analyzed file names
     while (($file = readdir($dir)) !== false) {
-        if ($file !== "." && $file !== ".."
-            && false !== strpos($file, ".html")
-            && !strpos_array($file, $cfg["ignore_players"])) {
+        if ($file !== "." && $file !== ".." && false !== strpos($file, ".html") && !strpos_array($file,
+                $cfg["ignorePlayers"])) {
 
             if ($file[strlen($file) - 9] !== "_") {
                 // trick to add a leading zero for 1-9pointer
                 if ($file[6] === "_") {
                     $file = "0" . $file;
                 }
-                $files[] = $file;
+                $filesShow[] = $file;
             } // end of file like "_002.html"
             else {
-                $files_hidden[] = $file;
+                $filesHidden[] = $file;
             }
         }
     }
     //close directory
     closedir($dir);
 
-    rsort($files);
-    reset($files);
+    rsort($filesShow);
+    reset($filesShow);
 }
-if (!isset($_SESSION["files"]) && count($files)) {
-    $_SESSION["files"] = $files;
+if (!isset($_SESSION["filesShow"]) && count($filesShow)) {
+    $_SESSION["filesShow"] = $filesShow;
 }
-if (!isset($_SESSION["files_hidden"]) && count($files_hidden)) {
-    $_SESSION["files_hidden"] = $files_hidden;
+if (!isset($_SESSION["filesHidden"]) && count($filesHidden)) {
+    $_SESSION["filesHidden"] = $filesHidden;
 }
 
 // search stuff
-if ($form_fields) {
-
-    if (array_key_exists("p", $form_fields)) {
-        $form_fields["p"] = strtolower($form_fields["p"]); // points
-        $form_fields["p"] = preg_replace('/[^0-9p]/', "", $form_fields["p"]);
+if ($formFields) {
+    if (array_key_exists("p", $formFields)) {
+        $formFields["p"] = strtolower($formFields["p"]); // points
+        $formFields["p"] = preg_replace('/[^0-9p]/', "", $formFields["p"]);
     }
 
-    if (array_key_exists("s", $form_fields)) {
-        $form_fields["s"] = strtolower($form_fields["s"]); // player names
-        $form_fields["s"] = str_replace(" ", "-", $form_fields["s"]);
+    if (array_key_exists("s", $formFields)) {
+        $formFields["s"] = strtolower($formFields["s"]); // player names
+        $formFields["s"] = str_replace(" ", "-", $formFields["s"]);
+        $formFields["s"] = preg_replace('/[^0-9A-z\-]/', "", $formFields["s"]);
     }
 }
 
 // The file names in array depending on the search
-$links = [];
-if ($form_fields["s"] || $form_fields["p"]) {
-    foreach ($files as $key => $val) {
+$linksShow = [];
+if ($formFields["s"] || $formFields["p"]) {
+    foreach ($filesShow as $key => $val) {
 
-        $check = strtolower($val);
-
-        if ($found = GetFileByField($form_fields, $check, $val)) {
-            $links[] = $found;
+        if ($found = getFileByField($formFields, strtolower($val), $val)) {
+            $linksShow[] = $found;
         }
     }
 } else {
-    $links = $files;
+    $linksShow = $filesShow;
 }
 
 // get amount of matches with opponents
-$players = [];
-foreach ($links as $key => $val) {
+$playersShow = [];
+foreach ($linksShow as $key => $val) {
 
     // delete leading zero
     $val = trim($val, '0');
@@ -102,58 +118,56 @@ foreach ($links as $key => $val) {
     $change = [
         '.html' => "",
         '-' => " ",
-        $cfg["players_name"] => "", // removes the name
+        $cfg["playersName"] => "", // removes the name
     ];
 
-    $this_line = explode("_", strtr($val, $change));
-    // the opponent players name
-    $player_name = $this_line[2] ?: $this_line[3];
+    $thisLine = explode("_", strtr($val, $change));
+    // the opponent playersShow name
+    $playerName = $thisLine[2] ?: $thisLine[3];
 
-    $players[$player_name]++;
+    $playersShow[$playerName]++;
 }
 
-// Just to count later on the hidden files per search
-$hidden_files = [];
+// Just to count later on the hidden filesShow per search
+$hiddenFiles = [];
 
-if (count($files_hidden)) {
+if (count($filesHidden)) {
 
-    if ($form_fields["p"] || $form_fields["s"]) {
-        foreach ($files_hidden as $key => $val) {
-
-            $check = strtolower($val);
-
-            if ($found = GetFileByField($form_fields, $check, $val)) {
-                $hidden_files[] = $found;
+    if ($formFields["p"] || $formFields["s"]) {
+        foreach ($filesHidden as $key => $val) {
+            if ($found = getFileByField($formFields, strtolower($val), $val)) {
+                $hiddenFiles[] = $found;
             }
         }
     } else {
-        $hidden_files = $files_hidden;
+        $hiddenFiles = $filesHidden;
     }
 }
 
-$cnt_games = count($hidden_files) + count($links);
-$cnt_matches = count($links);
-$cnt_players = count($players);
+$cntGames = count($hiddenFiles) + count($linksShow);
+$cntMatches = count($linksShow);
+$cntPlayers = count($playersShow);
 
-$output[] = ""; // output
+$thisOutput[] = ""; // thisOutput
 
-if ($cnt_matches) {
+
+if ($cntMatches) {
 
     $change = [
-        '{cnt_games}' => $cnt_games,
-        '{cnt_matches}' => $cnt_matches,
-        '{match_plural}' => $cnt_matches === 1 ? 'match' : 'matches',
-        '{player_info}' => $cnt_players > 1 ? '<br>' . $cnt_players . ' players' : '',
+        '{cntGames}' => $cntGames,
+        '{cntMatches}' => $cntMatches,
+        '{match_plural}' => $cntMatches === 1 ? 'match' : 'matches',
+        '{player_info}' => $cntPlayers > 1 ? $cntPlayers . ' players' : '',
     ];
 
-    $output[] = strtr($tpl_title, $change);
+    $thisOutput[] = strtr($tplTitle, $change);
 }
 
-$output[] = '<hr>';
 
-if (is_array($links)) {
+if (is_array($linksShow)) {
 
-    foreach ($links as $key => $val) {
+    $i = 0;
+    foreach ($linksShow as $key => $val) {
         $i++;
 
         // delete leading zero
@@ -162,44 +176,33 @@ if (is_array($links)) {
         $change = [
             '.html' => "",
             '-' => " ",
-            $cfg["players_name"] => "",
+            $cfg["playersName"] => "",
         ];
 
-        $this_line = explode("_", strtr($val, $change));
+        $thisLine = explode("_", strtr($val, $change));
 
-        // the opponent players name
-        $player_name = $this_line[2] ?: $this_line[3];
+        // the opponent playersShow name
+        $playerName = $thisLine[2] ?: $thisLine[3];
 
         $change = [
-            '{cfg_link_games}' => $cfg["link_games"],
+            '{cfg_link_games}' => $cfg["linkGames"],
             '{val}' => $val,
             '{i}' => $i,
-            '{line_0}' => $this_line[0], // game number
-            '{line_1}' => $this_line[1], // points
-            '{opponent}' => $player_name, // opponents name
-            '{cnt_games}' => $players[$player_name], // cnt_games with the opponent
-            '{cnt_matches}' => $players[$player_name] === 1 ? 'match' : 'matches',
+            '{line_0}' => $thisLine[0], // game number
+            '{line_1}' => $thisLine[1], // points
+            '{opponent}' => $playerName, // opponents name
+            '{cntGames}' => $playersShow[$playerName], // cntGames with the opponent
+            '{cntPlayerMatches}' => $playersShow[$playerName] === 1 ? 'match' : 'matches',
         ];
 
-        $output[] = strtr($tpl_link, $change);
-
+        $thisOutput[] = strtr($tplLink, $change);
     }
 }
-// removes all empty space and line breaks with space
-$output = preg_replace('/\s+/', ' ', $output);
 
-?><!DOCTYPE html>
-<html lang="en" dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
-<head>
-    <title>Browse</title>
-    <link rel="stylesheet" href="styles.css" type="text/css"/>
-    <style type="text/css">
-        body {
-            margin: 0 0 0 2px;
-        }
-    </style>
-</head>
-<body class="fontfamily">
-<?= implode($output) ?>
-</body>
-</html>
+$fullOutput = implode($thisOutput);
+
+// removes all empty space and line breaks with space
+$fullOutput = preg_replace('/\s+/', ' ', $fullOutput);
+
+
+echo str_replace('{fullOutput}', $fullOutput, $tplBody);

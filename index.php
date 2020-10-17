@@ -5,8 +5,8 @@
 </head>
 <frameset cols="280,*">
     <frameset rows="30,*">
-        <frame name="search" src="search.php" marginwidth="5" marginheight="0" scrolling="auto" frameborder="0">
+        <frame name="search" src="form.php" marginwidth="5" marginheight="0" scrolling="auto" frameborder="0">
         <frame name="browse" src="browse.php" marginwidth="5" marginheight="5" scrolling="auto" frameborder="0">
     </frameset>
-    <frame name="games" src="start.php" marginwidth="5" marginheight="5" scrolling="auto" frameborder="0">
+    <frame name="games" src="welcome.php" marginwidth="5" marginheight="5" scrolling="auto" frameborder="0">
 </frameset>

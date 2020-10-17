@@ -1,27 +1,29 @@
 <?php
 
+$cfg = [];
 include __DIR__ . "/config.php";
 
 // template for the players link
-$tpl_player_link = '<a href="{cfg_dg_profile}" title="dailygammon profile" target="_blank">{cfg_players_name}</a>';
+$tplPlayerLink = '<a href="{cfg_dgProfile}" title="dailygammon profile" target="_blank">{cfg_playersName}</a>';
 
-$players_profile = "";
+$playerProfile = "";
 
-if ($cfg["dg_profile"] > '') {
+if ($cfg["dgProfile"] > '') {
 
-    $change = [
-        '{cfg_dg_profile}' => $cfg["dg_profile"],
-        '{cfg_players_name}' => $cfg["players_name"],
-    ];
-
-    $players_profile = strtr($tpl_player_link, $change);
+    $playerProfile = strtr($tplPlayerLink, [
+        '{cfg_dgProfile}' => $cfg["dgProfile"],
+        '{cfg_playersName}' => $cfg["playersName"],
+    ]);
 }
 
-$files_analyzed = scandir($cfg["path_html"], SCANDIR_SORT_ASCENDING);
-rsort($files_analyzed, SORT_NUMERIC);
-$file_date = date('d.m.Y', filemtime($cfg["path_html"] . $files_analyzed[0]));
+$filesAnalyzed = scandir($cfg["pathHtml"], SCANDIR_SORT_ASCENDING);
+rsort($filesAnalyzed, SORT_NUMERIC);
+$fileDate = date('d.m.Y', filemtime($cfg["pathHtml"] . $filesAnalyzed[0]));
 
-?><!DOCTYPE html>
+$iniListGnuBg = implode(PHP_EOL, $cfg["iniListGnuBg"]);
+
+$tplBody = <<< HTML
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Start</title>
@@ -39,12 +41,12 @@ $file_date = date('d.m.Y', filemtime($cfg["path_html"] . $files_analyzed[0]));
         <img src="dglogo.gif" width="255" height="83" alt="www.dailygammon.com"></a>
 </div>
 <div class="clearfix">
-    <p>Here are all backgammon matches played by <?= $players_profile ?> on
+    <p>All backgammon matches played by {$playerProfile} on
         <a href="http://www.dailygammon.com" target="_blank">dailygammon</a>,
         analyzed and exported by
         <a href="http://www.gnubg.org/" target="_blank" title="www.gnubg.org">GNU Backgammon</a>.
     </p>
-    <p>The newest game is from <?= $file_date ?></p>
+    <p>The newest game is from {$fileDate}</p>
 
     <p>The matches are sorted by number. Next to it is the match length with the player name.</p>
 
@@ -60,13 +62,17 @@ $file_date = date('d.m.Y', filemtime($cfg["path_html"] . $files_analyzed[0]));
 
     <p>The used settings for GNU Backgammon:</p>
 
-    <pre><?= $cfg["gnubg_ini_head"] ?></pre>
-    <pre><?= implode(PHP_EOL, $cfg["gnubg_ini_list"]) ?></pre>
+    <pre>{$cfg["iniHeadGnuBg"]}</pre>
+    <pre>{$iniListGnuBg}</pre>
 
-    <p>If you want to use these tools for yourself, you can download them from
+    <p>If you want to use these tool for yourself, you can download it from
         <a href="https://github.com/AAKempf/dg2gnubg" target="_blank">GitHub</a></p>
 
     <p>Btw: <a href="openings.php">Starting rolls</a> and the best moves.</p>
 </div>
 </body>
 </html>
+HTML;
+
+echo $tplBody;
+

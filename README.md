@@ -1,4 +1,4 @@
-Dailygammon/GNU Backgammon Tools Ver. 1.0
+Dailygammon/GNU Backgammon Tools Ver. 1.1
 =
 Download your own backgammon matches from dailygammon.com (DG) in a readable format for GNU Backgammon which can analyze and export them into different formats, e.g. HTML and PDF.
   
@@ -14,9 +14,9 @@ You see it running at https://dg2gnubg.amalesh.de/
 # Installation and Configuration
 Save the files anywhere on your (local) web server.
 
-Open tools/get_dg_matches.php and insert your User-ID and your Cookie to download the files from dailygammon.com.
+Open config.php to insert your DG-ID and Cookie. 
 
-Open config.php to edit more settings. Usually only your DG player name is needed.
+You can create a file config.local.php with your config-vars and values. It will overwrite all from config.php
 
 Everything is explained in the files itself.
 

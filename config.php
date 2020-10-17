@@ -1,24 +1,39 @@
 <?php
 /**
  * Configuration for DG match getter and the writer of the gnubg commands
- *
- * Your dailygammon setting is in tools/get_dg_matches.php
- *
  */
 
 $cfg = [];
 
-// Your name on Dailygammon. To hide it in the games list
-$cfg["players_name"] = "";
+/**
+ * The following vars could also be set in a file named
+ * config.local.php to overwrite this ones
+ */
+
+// Your name on Dailygammon. To hide it in the games list, fill it here
+$cfg["playersName"] = "";
 
 // The players profile on dailygammon.
 // If it's set, we set also a link with the players name on the start page
-// $cfg["dg_profile"] = "http://www.dailygammon.com/bg/user/ID";
-$cfg["dg_profile"] = "";
+// $cfg["dgProfile"] = "http://www.dailygammon.com/bg/user/ID";
+$cfg["dgProfile"] = "";
+
+// USERID from your DG cookie
+$cfg["user"] = "";
+
+// PASSWORD from your DG cookie (will be encrypted)
+$cfg["pass"] = "";
+
+// contains player names which don't wanna see themself in the results
+// $cfg["ignorePlayers"] = ['player1', 'player2'];
+$cfg["ignorePlayers"] = [''];
+
+// to limit the list of games on DG
+$cfg["daysToView"] = 60;
 
 // general gnubg-settings for the match analysis
 // to see the possible commands, open "gnubg -t" and type there "? set"  or use help in gnubg gui
-$cfg["gnubg_ini_head"] = '
+$cfg["iniHeadGnuBg"] = <<< TEXT
 set threads 3 
 set analysis moves on
 set analysis window on
@@ -44,58 +59,59 @@ set export cube display missed yes
 set export cube display close yes
 set record on
 set sound enable no
-';
+
+TEXT;
 
 // Additional gnubg commands for each match
-$cfg["gnubg_ini_list"] = [
-    "import mat {path_mat}{file_mat}",  // import match
+$cfg["iniListGnuBg"] = [
+    "import mat {pathMat}{file_mat}",  // import match
     "analyse match",  // analyze match
-    "save match {path_sgf}{file_sgf}", // save as sgf file first, see https://savannah.gnu.org/bugs/index.php?50617
+    "save match {pathSgf}{file_sgf}", // save as sgf file first, see https://savannah.gnu.org/bugs/index.php?50617
     "relational add match", // save statistics to player records in sql database
-    "load match {path_sgf}{file_sgf}", // load the sgf file
-    "export match html {path_html}{file_html}", // export it to the path $cfg["path_html"]
-    // "export match pdf {path_pdf}{file_pdf}"  // export it to the path $cfg["path_pdf"]
+    "load match {pathSgf}{file_sgf}", // load the sgf file
+    "export match html {pathHtml}{file_html}", // export it to the path $cfg["pathHtml"]
+    // "export match pdf {pathPdf}{file_pdf}"  // export it to the path $cfg["pathPdf"]
 ];
 
 // Replace one player name to another
-// usefull for some Fibs-clients which writes "You" as your player name in the .mat files
+// usefull for some Fibs-clients which writes "You" as your player name in the .mat filesShow
 // Example:
-// $cfg["replace_name_from"] = ["name1","name2"]
-// $cfg["replace_name_to"] = ["name1new","name2new"];
-$cfg["replace_name_from"] = [];
-$cfg["replace_name_to"] = [];
+// $cfg["replaceNameFrom"] = ["name1","name2"]
+// $cfg["replaceNameTo"] = ["name1new","name2new"];
+$cfg["replaceNameFrom"] = [];
+$cfg["replaceNameTo"] = [];
 
 // contains player names which don't wanna see themself in the results
-$cfg["ignore_players"] = [];
+// $cfg["ignorePlayers"] = ["name1","name2"];
 
 // contains game numbers to ignore them, maybe private ones
-$cfg["ignore_games"] = ["1", "2", "3"];
+$cfg["ignoreGames"] = ["1", "2", "3"];
 
 // Path Names
 // source path of match files
-$cfg["path_mat"] = __DIR__ . "/matches/dailygammon/";
+$cfg["pathMat"] = __DIR__ . "/matches/dailygammon/";
 
 // export path for html files
-$cfg["path_html"] = __DIR__ . "/matches/html/";
+$cfg["pathHtml"] = __DIR__ . "/matches/html/";
 
 // export path for PDF files
-$cfg["path_pdf"] = __DIR__ . "/matches/pdf/";
+$cfg["pathPdf"] = __DIR__ . "/matches/pdf/";
 
 // export path for SGF files
-$cfg["path_sgf"] = __DIR__ . "/matches/sgf/";
+$cfg["pathSgf"] = __DIR__ . "/matches/sgf/";
 
 // link path to the analyzed matches
-$cfg["link_games"] = "matches/html/";
+$cfg["linkGames"] = "matches/html/";
 
-// command file path and name for gnubg later on
+// GnuBg file path and name for gnubg later on
 // we fill it always with new commands
-$cfg["path_gnubg_ini"] = __DIR__ . "/tools/gnubg-batch-export.ini";
+$cfg["pathGnuBgIni"] = __DIR__ . "/tools/gnubg-batch-export.ini";
 
 // Linux path and file name to gnubg
-$cfg["gnubg_cmd"] = "gnubg -t -q --lang=en_GB --datadir=\$HOME/.gnubg";   // linux
+$cfg["cmdGnuBg"] = "gnubg -t -q --lang=en_GB --datadir=\$HOME/.gnubg";   // linux
 
 // Windows path and file name to gnubg (untested with datadir)
-$cfg["gnubg_cmd_win"] = "gnubg-no-gui -t -q --lang=en_GB --datadir=%USERPROFILE%\.gnubg";
+$cfg["cmdGnuBgWin"] = "gnubg-no-gui -t -q --lang=en_GB --datadir=%USERPROFILE%\.gnubg";
 
 // pattern for exported match file name, usually no need to change it.
 // browse.php needs this order
@@ -104,7 +120,14 @@ $cfg["gnubg_cmd_win"] = "gnubg-no-gui -t -q --lang=en_GB --datadir=%USERPROFILE%
 // {mp} = match points, with leading zeros
 // {p1} = player 1 name
 // {p2} = player 2 name
-$cfg["file_name_pattern"] = "{fn}_{mp}p_{p1}_{p2}";
+$cfg["patternFileName"] = "{fn}_{mp}p_{p1}_{p2}";
+
+if (file_exists("./config.local.php")) {
+    // overwrite:
+    // $cfg["playersName"], $cfg["dgProfile"]
+    // $cfg_user, $cfg_password
+    include "./config.local.php";
+}
 
 // End of configuration
 // ********************
@@ -136,33 +159,35 @@ function strpos_array($haystack, $needles)
     } else {
         return strpos($haystack, $needles);
     }
+    return 0;
 }
 
 /**
  * Checks the form fields values against a file name
  *
- * @param array $form_fields
+ * @param array $formFields
  * @param string $check
  * @param string $val
  * @return string filename
  */
-function GetFileByField(array $form_fields, string $check, string $val): string
+function getFileByField(array $formFields, string $check, string $val): string
 {
     $found = '';
 
-    if (array_key_exists("s", $form_fields) && $form_fields["s"] > "") {
-        if (strpos($check, $form_fields["s"])) {
+    if (array_key_exists("s", $formFields) && $formFields["s"] > "") {
+        if (strpos($check, $formFields["s"])) {
             $found = $val;
         }
-    } elseif (array_key_exists("p", $form_fields) && $form_fields["p"] > "") {
+    } elseif (array_key_exists("p", $formFields) && $formFields["p"] > "") {
 
-        if (strpos($check, $form_fields["p"])) {
+        if (strpos($check, $formFields["p"])) {
             $found = $val;
         }
-    } else if (false !== strpos($check, $form_fields["p"]) && false !== strpos($check, $form_fields["s"])) {
-        $found = $val;
+    } else {
+        if (false !== strpos($check, $formFields["p"]) && false !== strpos($check, $formFields["s"])) {
+            $found = $val;
+        }
     }
 
     return $found;
-
 }

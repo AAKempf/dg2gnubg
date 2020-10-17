@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="styles.css" type="text/css"/>
 </head>
 <body>
-<form method="post" action="browse.php" target="browse">
+<form action="browse.php" method="get" target="browse">
     <select id="points" name="p" title="Points">
         <option value="">pts
         <option value="01p"> 1
@@ -22,8 +22,8 @@
         <option value="23p">23
         <option value="25p">25
     </select>
-    <input type="text" name="s" title="Search for name or empty search for full list" placeholder="Search">
-    <input type="submit" value="go"> <a href="browse.php" target="browse" class="utf8-icons ml6">&#x21bb;</a>
+    <input name="s" placeholder="Search" title="Search for name, number or empty search for full list" type="text">
+    <input type="submit" value="go"> <a class="utf8-icons ml6" href="browse.php" target="browse">&#x21bb;</a>
 </form>
 </body>
 </html>
