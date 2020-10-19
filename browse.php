@@ -34,6 +34,14 @@ $tplLink = <<< HTML
 <a href="browse.php?s={opponent}" title="{cntGames} {cntPlayerMatches} with {opponent}" class="ml6">{opponent}</a><br />
 HTML;
 
+if (!is_dir($cfg["pathHtml"])) {
+    $change = [
+      '{fullOutput}' => "Path '{$cfg["pathHtml"]}' does not exists!",
+    ];
+
+    echo strtr($tplBody,$change);
+    exit;
+}
 
 $formFields = $_POST;
 if (!$formFields) {
@@ -52,9 +60,11 @@ if (isset($_SESSION["filesShow"])) {
     $dir = opendir($cfg["pathHtml"]);
 
     // read the analyzed file names
+    $x=  0;
     while (($file = readdir($dir)) !== false) {
-        if ($file !== "." && $file !== ".." && false !== strpos($file, ".html") && !strpos_array($file,
-                $cfg["ignorePlayers"])) {
+        if ($file !== "." && $file !== ".."
+            && false !== strpos($file, ".html")
+            && !strpos_array($file, $cfg["ignorePlayers"])) {
 
             if ($file[strlen($file) - 9] !== "_") {
                 // trick to add a leading zero for 1-9pointer
@@ -149,7 +159,6 @@ $cntMatches = count($linksShow);
 $cntPlayers = count($playersShow);
 
 $thisOutput[] = ""; // thisOutput
-
 
 if ($cntMatches) {
 
